@@ -36,7 +36,14 @@ public:
         const ComplexVector &input_vector,
         const real_t &epsilon,
         const unsigned &max_iterations,
-        int debug_level = 0);
+        int debug_level = 0,
+        std::function<real_t(const Complex &min_y_val, const ComplexVector &b_col)> calculate_error = [](const Complex &min_y_val, const ComplexVector &b_col) -> real_t
+        {
+            using std::abs;
+            return abs(min_y_val) * abs(max(b_col).val);
+        }
+
+    );
     void run();
 
     ComplexVector get_result() const;
@@ -58,11 +65,11 @@ private:
 
     void update_h(const size_t &im);
 
-    Id_Val min(const ComplexVector &v) const;
-    Id_Val max(const ComplexVector &v) const;
+    static Id_Val min(const ComplexVector &v);
+    static Id_Val max(const ComplexVector &v);
 
-    Id_Val min_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans) const;
-    Id_Val max_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans) const;
+    static Id_Val min_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans);
+    static Id_Val max_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans);
     void print_vector(const ComplexVector &v) const;
     const size_t n;
     int idb; // debug level
@@ -73,6 +80,10 @@ private:
     ComplexVector x, y, r;
     ComplexMatrix b, h;
     STATUS status;
+    // error function (e.g. For the phase error)
+    // ! The custome error function may give a degraded result (i.e. the result will less than, but may not close to the maximan allowed range boundary)
+    // ! This property may lead to a worse circuit
+    std::function<real_t(const Complex &min_y_val, const ComplexVector &b_col)> get_error;
 };
 
 #endif // __PSLQ_COMPLEX_H__

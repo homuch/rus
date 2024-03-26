@@ -18,12 +18,14 @@ PslqComplex::PslqComplex(
     const ComplexVector &input_vector,
     const real_t &epsilon,
     const unsigned &max_iterations,
-    int debug_level)
+    int debug_level,
+    std::function<real_t(const Complex &min_y_val, const ComplexVector &b_col)> calculate_error)
     : n(input_vector.size()), eps(epsilon), itm(max_iterations), idb(debug_level),
       gamma(sqrt(real_t(4.0) / real_t(3.0))), status(STATUS::ITERATION),
-      x(input_vector), y(n), b(n, n), h(n, n - 1)
+      x(input_vector), y(n), b(n, n), h(n, n - 1), get_error(calculate_error)
 {
 }
+
 void PslqComplex::run()
 {
     unsigned it_count = itm;
@@ -88,10 +90,8 @@ void PslqComplex::pslq_iteration()
     iter_reduction(im);
 
     Id_Val min_y = min(y);
-    Id_Val max_b_col = max(b.col(min_y.id));
 
-    // todo: check real precision (exhausted or not)
-    if (abs(min_y.val) * abs(max_b_col.val) < eps)
+    if (get_error(min_y.val, b.col(min_y.id)) < eps)
         status = STATUS::SUCCESS;
 }
 void PslqComplex::pslq_init()
@@ -243,7 +243,7 @@ void PslqComplex::update_h(const size_t &im)
     }
 }
 
-PslqComplex::Id_Val PslqComplex::min(const ComplexVector &v) const
+PslqComplex::Id_Val PslqComplex::min(const ComplexVector &v)
 {
     using std::abs;
     Id_Val result;
@@ -263,7 +263,7 @@ PslqComplex::Id_Val PslqComplex::min(const ComplexVector &v) const
     }
     return result;
 }
-PslqComplex::Id_Val PslqComplex::max(const ComplexVector &v) const
+PslqComplex::Id_Val PslqComplex::max(const ComplexVector &v)
 {
     using std::abs;
     Id_Val result;
@@ -283,7 +283,7 @@ PslqComplex::Id_Val PslqComplex::max(const ComplexVector &v) const
     return result;
 }
 
-PslqComplex::Id_Val PslqComplex::min_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans) const
+PslqComplex::Id_Val PslqComplex::min_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans)
 {
     using std::abs;
     Id_Val result;
@@ -302,7 +302,7 @@ PslqComplex::Id_Val PslqComplex::min_for(const ComplexVector &v, std::function<r
     }
     return result;
 }
-PslqComplex::Id_Val PslqComplex::max_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans) const
+PslqComplex::Id_Val PslqComplex::max_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans)
 {
     using std::abs;
     Id_Val result;

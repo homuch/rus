@@ -37,10 +37,20 @@ void print_OmegaRing(const Normalization::OmegaRing &z)
 int main()
 {
     std::cout << "Stage 1: PSLQ\n";
+    const double THETA = M_PI / 64;
     // Define the input vector x
-    vector<complex<mpf_class>> x = create_vector(M_PI / 8);
+    vector<complex<mpf_class>> x = create_vector(THETA);
 
-    PslqComplex pslq(x, 1e-6, 10000, 1);
+    // ! custom error function often leads to a real epsilon which is too small
+    // ! this may cause a longer circuit/T depth
+    auto get_error = [THETA](const complex<mpf_class> &min_y_val, const vector<complex<mpf_class>> &b_col) -> mpf_class
+    {
+        Normalization::OmegaRing z = create_omega_ring(b_col);
+        auto cz = z.toComplex(0);
+        return abs(2 * ((decltype(cz)(cos(THETA / 2), sin(THETA / 2))) * cz).imag() / abs(cz));
+    };
+
+    PslqComplex pslq(x, 1e-5, 10000, 1, get_error);
     pslq.run();
     PslqComplex::ComplexVector r = pslq.get_result();
 
@@ -63,6 +73,10 @@ int main()
     Normalization::OmegaRing z = create_omega_ring(r);
     print_OmegaRing(z);
 
+    // todo: check the real epsilon
+    auto cz = z.toComplex(0);
+    std::cout << "real epsilon = " << 2 * ((decltype(cz)(cos(THETA / 2), sin(THETA / 2))) * cz).imag() / abs(cz) << std::endl;
+
     std::cout << "Stage 2: Normalization\n";
 
     Normalization normSolver(z);
@@ -71,6 +85,11 @@ int main()
 
     std::cout << "Stage 3: decomposition\n";
     circuit cir = exactDecomposer::decompose(result2);
-    cir.toStream(std::cout);
+    std::ostringstream oss;
+    cir.toStream(oss);
+    std::string str = oss.str();
+    int count = std::count(str.begin(), str.end(), 'T');
+    std::cout << "Number of 'T' in the stream: " << count << std::endl;
+    std::cout << "Circuit depth: " << std::count(str.begin(), str.end(), '\n') << std::endl;
     return 0;
 }
