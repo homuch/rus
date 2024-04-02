@@ -113,6 +113,7 @@ add_executable(rusSyn
  rus/matrix.cpp
  rus/normalization.cpp
  rus/pslq.cpp
+ rus/rus.cpp
 
  test.cpp
  factorzs2.cpp

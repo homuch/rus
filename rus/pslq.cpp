@@ -5,6 +5,7 @@
 #include <cmath>
 #include <functional>
 #include <gmpxx.h>
+#include <set>
 #include "pslq.h"
 #include "matrix.h"
 #include "numeric_definition.h"
@@ -19,10 +20,11 @@ PslqComplex::PslqComplex(
     const real_t &epsilon,
     const unsigned &max_iterations,
     int debug_level,
+    int effort_level,
     std::function<real_t(const Complex &min_y_val, const ComplexVector &b_col)> calculate_error)
-    : n(input_vector.size()), eps(epsilon), itm(max_iterations), idb(debug_level),
+    : n(input_vector.size()), eps(epsilon), itm(max_iterations), idb(debug_level), effort(effort_level),
       gamma(sqrt(real_t(4.0) / real_t(3.0))), status(STATUS::ITERATION),
-      x(input_vector), y(n), b(n, n), h(n, n - 1), get_error(calculate_error)
+      x(input_vector), y(n), b(n, n), h(n, n - 1), get_error(calculate_error), r_sets(compareComplexVectorRealPart)
 {
 }
 
@@ -30,6 +32,8 @@ void PslqComplex::run()
 {
     unsigned it_count = itm;
     unsigned db_period = 500;
+    int _effort = effort;
+    r_sets.clear();
 
     if (idb >= 2)
     {
@@ -38,35 +42,42 @@ void PslqComplex::run()
     }
 
     pslq_init();
-
-    while (status == STATUS::ITERATION && it_count-- > 0)
+    while (_effort-- > 0)
     {
-        if (it_count % db_period == 0 && idb > 1)
-            std::cout << it_count << std::endl;
+        while (status == STATUS::ITERATION && it_count-- > 0)
+        {
+            if (it_count % db_period == 0 && idb > 1)
+                std::cout << it_count << std::endl;
 
-        pslq_iteration();
+            pslq_iteration();
+        }
+
+        if (status != STATUS::SUCCESS)
+            break;
+        status = STATUS::ITERATION;
+        size_t min_y_id = min(y).id;
+        r_sets.insert(b.col(min_y_id));
     }
-    size_t min_y_id = min(y).id;
-    r = b.col(min_y_id);
     switch (status)
     {
     case STATUS::SUCCESS:
     {
-        std::cout << "Success" << std::endl;
+        std::cout << "PSLQ: Success" << std::endl;
         break;
     }
     case STATUS::ITERATION:
-        std::cout << "Iteration limit exceeded " << itm << std::endl;
+        std::cerr << "PSLQ: Iteration limit exceeded " << itm << std::endl;
         break;
 
     default:
-        std::cout << "Failed" << std::endl;
+        std::cerr << "PSLQ: Failed" << std::endl;
         break;
     }
 }
-PslqComplex::ComplexVector PslqComplex::get_result() const
+
+std::vector<PslqComplex::ComplexVector> PslqComplex::get_results() const
 {
-    return r;
+    return std::vector<PslqComplex::ComplexVector>(r_sets.begin(), r_sets.end());
 }
 
 void PslqComplex::pslq_iteration()
@@ -110,6 +121,8 @@ void PslqComplex::pslq_init()
 
     init_h(s);
     init_reduction();
+
+    // todo: use custom error function
     if (abs(min(y).val) < eps)
     {
         status = STATUS::SUCCESS;
@@ -328,4 +341,20 @@ void PslqComplex::print_vector(const ComplexVector &v) const
         std::cout << v[i] << " ";
     }
     std::cout << std::endl;
+}
+
+bool PslqComplex::compareComplexVectorRealPart(const PslqComplex::ComplexVector &a, const PslqComplex::ComplexVector &b)
+{
+    if (a.size() < b.size())
+        return true;
+    if (a.size() > b.size())
+        return false;
+    for (size_t i = 0; i < a.size(); i++)
+    {
+        if (a[i].real() < b[i].real())
+            return true;
+        if (a[i].real() > b[i].real())
+            return false;
+    }
+    return false;
 }

@@ -1,6 +1,6 @@
-SQCT -- Single Qubit Circuit Toolkit
+# RUS -- Repeat-Until-Success quantum circuit synthesis
 
-BUILD
+## BUILD
 
 You will need the following libraries installed on your system: 
 1. Boost 1.48
@@ -14,15 +14,15 @@ You will need the following libraries installed on your system:
 Also C++ compiler supporting C++11 is necessary.
 Information about program use available through --help option.
 
-ABOUT 
-The program code based on results of http://arxiv.org/abs/1206.5236. It also implements 
-the version of Solovay Kitaev algorithm described in http://arxiv.org/abs/quant-ph/0505030. 
+## ABOUT 
+The program code based on results of https://arxiv.org/abs/1409.3552. 
 In addition to Boost, The GNU Multiple Precision Arithmetic Library, The GNU MPFR Library the library 
 mpfr::real by Christian Schneider <software(at)chschneider(dot)eu> is used for high precision
-floating point arithmetic. 
+In addition, a significant portion of the code leverages from [SQCT](https://github.com/vadym-kl/sqct).
 
-DIRECTORY STRUCTURE 
-sk -- implementation of the Solovay-Kitaev algorithm
-es -- exact synthesis algorithm
-theory -- numerical proof of result from arXiv:1206.5236, tests of exact synthesis algorithm 
-appr -- optimal round off of unitaries
+## DIRECTORY STRUCTURE 
+* sk -- implementation of the Solovay-Kitaev algorithm
+* es -- exact synthesis algorithm
+* theory -- numerical proof of result from arXiv:1206.5236, tests of exact synthesis algorithm 
+* appr -- optimal round off of unitaries
+* rus -- the rus implementation

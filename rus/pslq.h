@@ -10,7 +10,7 @@
 #include <gmpxx.h>
 #include "matrix.h"
 #include "numeric_definition.h"
-
+#include <set>
 mpf_class round(const mpf_class &x);
 
 // todo: correct epsilon(that reflect the difference of phase)
@@ -37,6 +37,7 @@ public:
         const real_t &epsilon,
         const unsigned &max_iterations,
         int debug_level = 0,
+        int effort_level = 1,
         std::function<real_t(const Complex &min_y_val, const ComplexVector &b_col)> calculate_error = [](const Complex &min_y_val, const ComplexVector &b_col) -> real_t
         {
             using std::abs;
@@ -46,7 +47,7 @@ public:
     );
     void run();
 
-    ComplexVector get_result() const;
+    std::vector<ComplexVector> get_results() const;
 
 private:
     void pslq_iteration();
@@ -71,18 +72,19 @@ private:
     static Id_Val min_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans);
     static Id_Val max_for(const ComplexVector &v, std::function<real_t(const Complex &, const size_t &)> trans);
     void print_vector(const ComplexVector &v) const;
+    static bool compareComplexVectorRealPart(const PslqComplex::ComplexVector &a, const PslqComplex::ComplexVector &b);
     const size_t n;
     int idb; // debug level
     int nwds;
+    int effort;   // effort level (collect more results if effort > 1)
     unsigned itm; // maximum number of iterations
     real_t eps;
     const real_t gamma;
-    ComplexVector x, y, r;
+    ComplexVector x, y;
     ComplexMatrix b, h;
     STATUS status;
+    std::set<ComplexVector, decltype(compareComplexVectorRealPart) *> r_sets;
     // error function (e.g. For the phase error)
-    // ! The custome error function may give a degraded result (i.e. the result will less than, but may not close to the maximan allowed range boundary)
-    // ! This property may lead to a worse circuit
     std::function<real_t(const Complex &min_y_val, const ComplexVector &b_col)> get_error;
 };
 
