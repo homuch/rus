@@ -1,0 +1,40 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Build & Publish Release Asset
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Library
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev libgmp3-dev libmpfr-dev
+
+      - name: Compile
+        run: |
+          cmake .
+          make
+      
+      - name: Check production existence
+        run: |
+          if [ ! -f "rusSyn" ]; then
+              echo "Error: The production file does not exist."
+              exit 1
+          fi
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: rusSyn
