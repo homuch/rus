@@ -26,3 +26,20 @@ In addition, a significant portion of the code leverages from [SQCT](https://git
 * theory -- numerical proof of result from arXiv:1206.5236, tests of exact synthesis algorithm 
 * appr -- optimal round off of unitaries
 * rus -- the rus implementation
+
+## USAGE
+
+### Build Single Gate
+
+(todo)
+
+### Build Gate Database
+Add `--database`
+
+For example, 
+
+```
+./rusSyn -O output_folder -F 5 -E 1e-5 -C g-count -P pi/32 --qubit-name q[0] --ancil-name a[0] --database
+```
+
+will generate Rz gate from $+\pi$ to $-\pi$ per $\pi/32$ (Centered at 0). The output files name will be `${output_folder}/out${i}_pi|32_1e-5`, where $i$ is integer (which means $\theta=i*\pi/32$).

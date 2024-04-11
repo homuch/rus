@@ -55,7 +55,8 @@ private:
 class QasmGenerator
 {
 public:
-    static void to_qasm(circuit &cir, std::ostream &os, std::string qbit_def = "", std::string ancil_def = "", bool without_header = true);
+    static void to_qasm(circuit &cir, std::ostream &os, std::string qbit_def = "", bool without_header = true);
+    static void to_rus_qasm(circuit &cir, std::ostream &os, std::string qbit_def = "", std::string ancil_def = "", bool without_header = true, bool with_tail_syntax = true);
 
 private:
     static std::vector<std::string> gen_name_qasm();

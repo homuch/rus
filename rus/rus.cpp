@@ -192,7 +192,37 @@ int RUS::count_gate(const circuit &cir)
     return std::count(str.cbegin(), str.cend(), '\n');
 }
 
-void QasmGenerator::to_qasm(circuit &cir, std::ostream &os, std::string qbit_def, std::string ancil_def, bool without_header)
+void QasmGenerator::to_qasm(circuit &cir, std::ostream &os, std::string qbit_def, bool without_header)
+{
+    if (!without_header)
+    {
+        os << "OPENQASM 2.0;\n";
+        os << "include \"qelib1.inc\";\n\n";
+    }
+    if (qbit_def.empty())
+    {
+        os << "qreg q[1];\n";
+        qbit_def = "q[0]";
+    }
+    if (cir.size() == 0 || (cir.size() == 1 && cir[0] == gateLibrary::Id))
+    {
+        os << "id " << qbit_def << ";\n";
+        return;
+    }
+    auto name_qasm = gen_name_qasm();
+    fill_in_gatename(name_qasm, qbit_def);
+
+    for (size_t i = 0; i < cir.size(); i++)
+    {
+        if (cir[i] == gateLibrary::Id)
+            continue;
+        if (cir[i] >= gateLibrary::GLw1 && cir[i] <= gateLibrary::GLw7)
+            throw std::runtime_error("Unsupported gate in QASM: " + std::to_string(cir[i]));
+        os << name_qasm[cir[i]];
+    }
+}
+
+void QasmGenerator::to_rus_qasm(circuit &cir, std::ostream &os, std::string qbit_def, std::string ancil_def, bool without_header, bool with_tail_syntax)
 {
     if (!without_header)
     {
@@ -209,25 +239,19 @@ void QasmGenerator::to_qasm(circuit &cir, std::ostream &os, std::string qbit_def
         os << "qreg a[1];\n";
         ancil_def = "a[0]";
     }
-    if (cir.size() == 0)
+    if (cir.size() == 0 || (cir.size() == 1 && cir[0] == gateLibrary::Id))
     {
         os << "id " << qbit_def << ";\n";
         return;
     }
-    auto name_qasm = gen_name_qasm();
-    fill_in_gatename(name_qasm, ancil_def);
 
     os << "cx " << qbit_def << "," << ancil_def << ";\n";
-    for (size_t i = 0; i < cir.size(); i++)
-    {
-        if (cir[i] == gateLibrary::Id)
-            continue;
-        if (cir[i] >= gateLibrary::GLw1 && cir[i] <= gateLibrary::GLw7)
-            throw std::runtime_error("Unsupported gate in QASM: " + std::to_string(cir[i]));
-        os << name_qasm[cir[i]];
-    }
+    to_qasm(cir, os, ancil_def, true);
     os << "cx " << qbit_def << "," << ancil_def << ";\n";
-    os << "// only valid when measure " << ancil_def << " == 0";
+    if (with_tail_syntax)
+        os << "rus " << ancil_def << "==0;";
+    else
+        os << "// only valid when measure " << ancil_def << " == 0";
 }
 
 std::vector<std::string> QasmGenerator::gen_name_qasm()
