@@ -20,7 +20,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libboost-all-dev libgmp3-dev libmpfr-dev
-
+          wget http://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.15.5.tar.gz
+          tar -xvf pari-2.15.5.tar.gz
+          cd pari-2.15.5
+          ./Configure
+          make
+          sudo make install
+          cp misc/gprc.dft $HOME/.gprc
+          cd ..
       - name: Compile
         run: |
           cmake .
