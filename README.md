@@ -43,3 +43,5 @@ For example,
 ```
 
 will generate Rz gate from $+\pi$ to $-\pi$ per $\pi/32$ (Centered at 0). The output files name will be `${output_folder}/out${i}_pi|32_1e-5`, where $i$ is integer (which means $\theta=i*\pi/32$).
+
+(The program may die for high effort and precision currently)
