@@ -29,7 +29,7 @@ public:
 private:
     OmegaRing solve_y();
     RootTwoRing build_norm_equation();
-    void find_valid_r();
+    bool find_valid_r();
     real_t RootTwoToReal(const RootTwoRing &r);
 
     inline bool in_range(const RootTwoRing &r)

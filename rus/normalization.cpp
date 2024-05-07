@@ -36,7 +36,7 @@ Normalization::Normalization(const OmegaRing &z_poly) : z_poly(z_poly),
                                                                     .get_d()) /
                                                             2)),
                                                         r_dot_upper_bound(pow(2, real_t((R0 + ita) / 2).get_d())),
-                                                        x_min(1 - 1 / (2 * L1) * r_dot_upper_bound),
+                                                        x_min((1 - 1 / (2 * real_t(L1))) * r_dot_upper_bound),
                                                         x_max(r_dot_upper_bound),
                                                         r(RootTwoRing(0, 0)),
                                                         Lr(0)
@@ -81,8 +81,16 @@ Normalization::OmegaRing Normalization::solve_y()
 }
 Normalization::RootTwoRing Normalization::build_norm_equation()
 {
-
-    find_valid_r();
+    int max_trial = 10;
+    // r may not exist for Delta*delta = 2*r_dot_upper_bound * (x_max - x_min) < (1+\sqrt{2})^2
+    while (!find_valid_r())
+    {
+        if (--max_trial < 0)
+            throw std::runtime_error("No valid r found");
+        x_min *= 2;
+        x_max *= 2;
+    }
+    // std::cout << "r = " << r[0] << "+" << r[1] << "sqrt(2)" << std::endl;
     x_min *= 2;
     x_max *= 2;
 
@@ -95,7 +103,8 @@ Normalization::RootTwoRing Normalization::build_norm_equation()
     return rz;
 }
 
-void Normalization::find_valid_r()
+// todo: r seems not so strict? Maybe we can use a better way to find r
+bool Normalization::find_valid_r()
 {
     // const real_t Delta = 2 * r_dot_upper_bound;
     real_t a_real = real_t(ceil((x_min + r_dot_upper_bound) / 2));
@@ -108,21 +117,21 @@ void Normalization::find_valid_r()
     r = RootTwoRing(a, b);
 
     if (in_range(r))
-        return;
+        return true;
 
     ++b;
     r = RootTwoRing(a, b);
     if (in_range(r))
-        return;
+        return true;
 
     --b;
     --a;
 
     r = RootTwoRing(a, b);
     if (in_range(r))
-        return;
+        return true;
 
-    throw std::runtime_error("No valid r found");
+    return false;
 }
 
 real_t Normalization::RootTwoToReal(const RootTwoRing &r)
