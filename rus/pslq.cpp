@@ -62,11 +62,13 @@ void PslqComplex::run()
     {
     case STATUS::SUCCESS:
     {
-        std::cout << "PSLQ: Success" << std::endl;
+        if (idb >= 1)
+            std::cout << "PSLQ: Success" << std::endl;
         break;
     }
     case STATUS::ITERATION:
-        std::cerr << "PSLQ: Iteration limit exceeded " << itm << std::endl;
+        if (idb >= 0)
+            std::cerr << "PSLQ: Iteration limit exceeded " << itm << std::endl;
         break;
 
     default:
